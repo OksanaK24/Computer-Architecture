@@ -8,6 +8,8 @@ LDI = 0b10000010
 PRN = 0b01000111
 HLT = 0b00000001
 MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -23,7 +25,11 @@ class CPU:
             PRN: self.call_PRN,
             HLT: self.call_HLT,
             MUL: self.call_MUL,
+            PUSH: self.call_PUSH,
+            POP: self.call_POP,
         }
+        self.sp = 7
+        self.reg[self.sp] = len(self.ram)
 
     def ram_read(self, address):
         return self.ram[address]
@@ -129,6 +135,21 @@ class CPU:
 
     def call_HLT(self):
         self.running = False
+
+    def call_PUSH(self):
+        given_register = self.ram[self.pc + 1]
+        value_in_register = self.reg[given_register]
+        self.reg[self.sp] -= 1
+        self.ram[self.reg[self.sp]] = value_in_register
+        self.pc += 2
+
+    def call_POP(self):
+        given_register = self.ram[self.pc + 1]
+        value_from_ram = self.ram[self.reg[self.sp]]
+        self.reg[given_register] = value_from_ram
+        self.reg[self.sp] += 1
+        self.pc += 2
+
 
     def run(self):
         """Run the CPU."""
