@@ -18,6 +18,12 @@ class CPU:
         self.reg = 8 * [0]
         self.pc = 0
         self.running = True
+        self.branchtable = {
+            LDI: self.call_LDI,
+            PRN: self.call_PRN,
+            HLT: self.call_HLT,
+            MUL: self.call_MUL,
+        }
 
     def ram_read(self, address):
         return self.ram[address]
@@ -99,32 +105,37 @@ class CPU:
 
         print()
 
+    def call_LDI(self):
+        # address
+        operand_a = self.ram_read(self.pc + 1)
+        # value
+        operand_b = self.ram_read(self.pc + 2)
+        self.reg[operand_a] = operand_b
+        self.pc += 3
+
+    def call_PRN(self):
+        # address
+        operand_a = self.ram_read(self.pc + 1)
+        self.pc += 2
+        print(self.reg[operand_a])
+    
+    def call_MUL(self):
+        # first register
+        operand_a = self.ram_read(self.pc + 1)
+        # second register
+        operand_b = self.ram_read(self.pc + 2)
+        self.pc += 3
+        self.alu("MUL", operand_a, operand_b)
+
+    def call_HLT(self):
+        self.running = False
+
     def run(self):
         """Run the CPU."""
         while self.running:
             instruction = self.ram[self.pc]
 
-            if instruction == LDI:
-                # address
-                operand_a = self.ram_read(self.pc + 1)
-                # value
-                operand_b = self.ram_read(self.pc + 2)
-                self.reg[operand_a] = operand_b
-                self.pc += 3
-
-            elif instruction == PRN: 
-                # address
-                operand_a = self.ram_read(self.pc + 1)
-                self.pc += 2
-                print(self.reg[operand_a])
-
-            elif instruction == MUL:
-                # first register
-                operand_a = self.ram_read(self.pc + 1)
-                # second register
-                operand_b = self.ram_read(self.pc + 2)
-                self.pc += 3
-                self.alu("MUL", operand_a, operand_b)
-
-            elif instruction == HLT:
-                self.running = False
+            if instruction in self.branchtable:
+                self.branchtable[instruction]()
+            else:
+                sys.exit(1)
